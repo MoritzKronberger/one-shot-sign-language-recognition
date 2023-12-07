@@ -70,8 +70,11 @@ def visualize_embeddings(
     # References:
     # - https://stackoverflow.com/a/69688664
     # - https://stackoverflow.com/a/37902765
-    sns_palette = sns.color_palette(cc.glasbey, n_colors=len(label_map))
-    custom_cmap = ListedColormap(sns_palette.as_hex())
+    # - https://stackoverflow.com/a/32771206
+    num_classes = len(label_map)
+    sns_palette = sns.color_palette(cc.glasbey, n_colors=num_classes)
+    custom_cmap = ListedColormap(sns_palette.as_hex(), N=num_classes)
+    norm = plt.Normalize(0, num_classes-1)
 
     # Visualize embeddings in scatter plot
     fig = plt.figure(figsize=figsize)
@@ -82,10 +85,12 @@ def visualize_embeddings(
         lw=0,
         s=20,
         c=embedding_labels,
-        cmap=custom_cmap
+        cmap=custom_cmap,
+        norm=norm
     )
 
     # Add custom legend
+    unique_embedding_labels = np.unique(embedding_labels)
     legend_elements = [
         Line2D(
             [0], [0],
@@ -97,6 +102,7 @@ def visualize_embeddings(
         )
         for str_lbl, int_lbl
         in label_map.items()
+        if int_lbl in unique_embedding_labels
     ]
     ax.legend(
         handles=legend_elements,
