@@ -169,7 +169,7 @@ class DGSAlphabet:
         # Regular train test split
         if exclusive_test_labels is None:
             # Convert to numeric labels
-            y = df.label.array
+            y = df.label.to_numpy()
             y, label_map = self.__str_labels_to_int(y)
 
             # Reshape data to 3D landmarks
@@ -197,14 +197,14 @@ class DGSAlphabet:
 
             # Get train data
             train_df = df[~test_mask]
-            y_train = train_df.label.array
+            y_train = train_df.label.to_numpy()
             x_train = train_df.drop(['label'], axis=1)
             x_train = x_train.to_numpy()
             x_train = x_train.reshape((x_train.shape[0], -1, landmark_dims))
 
             # Get test data
             test_df = df[test_mask]
-            y_test = test_df.label.array
+            y_test = test_df.label.to_numpy()
             x_test = test_df.drop(['label'], axis=1)
             x_test = x_test.to_numpy()
             x_test = x_test.reshape((x_test.shape[0], -1, landmark_dims))
