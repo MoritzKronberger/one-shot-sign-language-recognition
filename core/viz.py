@@ -110,5 +110,9 @@ def visualize_embeddings(
         borderaxespad=0
     )
 
+    # Hide ticks (since numbers are meaningless)
+    ax.set_xticks([])
+    ax.set_yticks([])
+
     plt.show()
     plt.close()
