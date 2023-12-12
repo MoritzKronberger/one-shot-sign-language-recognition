@@ -11,13 +11,15 @@ from keras.layers import (
     BatchNormalization
 )
 from keras.models import Model
+import tensorflow as tf
 
 
 def new_SNN_encoder(
     input_shape: list[int] = [21, 3],
     dense_count: int = 6,
     dense_base: int = 48,
-    dropout: bool = True
+    dropout: bool = True,
+    normalize_embeddings: bool = False
 ) -> Model:
     """Create new self normalizing encoder network.
 
@@ -52,6 +54,8 @@ def new_SNN_encoder(
         out = dense(out)
         if (dropout and i < dense_count-1):
             out = a_dropout(out)
+        if (normalize_embeddings and i == dense_count-1):
+            out = BatchNormalization()(out)
 
     return Model(inputs=inputs, outputs=out, name=f"SNN_{dense_count}_encoder")
 
@@ -89,7 +93,7 @@ def new_SNN_classifier(
 
 def new_Siamese_Network(
     encoder: Model,
-    distance: Callable,
+    distance: Callable | None,
     batch_normalization: bool = True,
     sigmoid_output: bool = True
 ) -> Model:
@@ -106,7 +110,10 @@ def new_Siamese_Network(
     tower_1 = encoder(input_1)
     tower_2 = encoder(input_2)
 
-    siamese = Lambda(distance)([tower_1, tower_2])
+    if distance is not None:
+        siamese = Lambda(distance)([tower_1, tower_2])
+    else:
+        siamese = Lambda(lambda x: tf.stack(x, axis=0))([tower_1, tower_2])
 
     if batch_normalization:
         siamese = BatchNormalization()(siamese)
