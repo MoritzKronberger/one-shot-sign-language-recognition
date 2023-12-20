@@ -48,7 +48,7 @@ def visualize_confusion_matrix(
             columns=pretty_labels
         ),
         annot=True,
-        cmap="YlGnBu",
+        cmap="Blues",
         fmt='d'
     )
     plt.tight_layout()
