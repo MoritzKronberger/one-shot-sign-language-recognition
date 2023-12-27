@@ -4,3 +4,4 @@
 *.csv
 datset/*
 *.keras
+tuner*
