@@ -2,6 +2,7 @@
 
 import copy
 import json
+import os
 from typing import Callable, Literal
 from keras.callbacks import (
     EarlyStopping,
@@ -266,9 +267,12 @@ class TunerHistory:
             except ValueError:
                 trial_history = History()
                 trial_history.on_train_begin()
-
-            trial_history.model = model
             self.__history[trial_id] = trial_history
+
+        # Set model for trial history
+        # (Might also be uninitialized if history was loaded from JSON)
+        if trial_history.model is None:
+            trial_history.model = model
 
         return trial_history
 
@@ -283,6 +287,42 @@ class TunerHistory:
             return self.__history[full_trial_id]
         except ValueError:
             return None
+
+    def to_json(self, filepath: str) -> None:
+        """Serialize trial histories as JSON string."""
+        # Collect trial histories into JSON-serializable dict
+        history = {
+            trial_id: {
+                "config": trial_config,
+                "history": {
+                    # Keras tuner saves metric values as list of np.float32???
+                    # Anyways, we need to convert them for JSON serialization
+                    k: [float(n) for n in v] for k, v
+                    in trial_history.history.items()
+                },
+                "epoch": trial_history.epoch,
+            }
+            for [trial_id, trial_config], trial_history
+            in self.__history.items()
+        }
+
+        # Save to JSON file
+        with open(filepath, 'w') as f:
+            return json.dump(history, f)
+
+    def init_from_json(self, filepath: str) -> None:
+        """Set trial histories' state from JSON contents."""
+        # Load trial histories from JSON file
+        with open(filepath, 'r') as f:
+            history = json.load(f)
+
+        # Reconstruct `History` classes from serialized dict
+        for trial_id, trial_history_dict in history.items():
+            trial_history = History()
+            trial_config = trial_history_dict["config"]
+            trial_history.history = trial_history_dict["history"]
+            trial_history.epoch = trial_history_dict["epoch"]
+            self.__history[(trial_id, trial_config)] = trial_history
 
 
 class TunerHistoryCallback(Callback):
@@ -299,7 +339,14 @@ class TunerHistoryCallback(Callback):
         ...,
         callbacks=[tuner_history_cb]
     )
+
+    # Get entire model history for trial
+    best_model_history = tuner_history_cb.get_trial_history(
+        best_trial.trial_id
+    )
     ```
+
+    History is persisted the same way as tuner checkpoints.
 
     Reference:
         https://stackoverflow.com/a/70410522
@@ -311,12 +358,30 @@ class TunerHistoryCallback(Callback):
     __history: TunerHistory
     __trial: Trial | None
     __trial_id: tuple[str, str]
+    __tuner: Tuner
 
     def __init__(self, tuner: Tuner):
         """Create new TunerHistoryCallback."""
         super().__init__()
-        self.__history = TunerHistory()
+
+        # Initialize tuner
+        self.__tuner = tuner
         tuner.on_trial_begin = self.__on_trial_begin
+        tuner.on_trial_end = self.__on_trial_end
+
+        # Initialize history
+        self.__history = TunerHistory()
+
+        # Check if history file exists in tuner's project dir
+        tuner_dir = self.__tuner.directory
+        project_subdir = self.__tuner.project_name
+        history_dir = f"{tuner_dir}/{project_subdir}"
+        history_filepath = f"{history_dir}/history.json"
+
+        # If exists, load history from JSON
+        if os.path.isfile(history_filepath):
+            print(f"Loading history from JSON {history_filepath}")
+            self.__history.init_from_json(history_filepath)
 
     def __hp_hash(self, hp: dict[str, int | float | bool]) -> str:
         """Create hash for hyperparameter config."""
@@ -364,6 +429,25 @@ class TunerHistoryCallback(Callback):
         """
         self.__trial = trial
         self.__trial_id = self.__full_trial_id(trial)
+
+    def __on_trial_end(self, trial: Trial):
+        """Persist history as JSON."""
+        # Get path to tuner's project directory
+        tuner_dir = self.__tuner.directory
+        project_subdir = self.__tuner.project_name
+        history_dir = f"{tuner_dir}/{project_subdir}"
+
+        # Save current history to JSON
+        history_filepath = f"{history_dir}/history.json"
+        print(f"Saving history to JSON {history_filepath}")
+        self.__history.to_json(history_filepath)
+
+        # Execute trial end as in `keras.tuner.BaseTuner.on_epoch_end`
+        # Since original callback is overwritten by this method
+        # Super hacky, but works
+        # (No idea why BaseTuner would have callback that can't be overwritten)
+        self.__tuner.oracle.end_trial(trial)
+        self.__tuner.save()
 
     def get_trial_history(self, trial_id: str) -> History:
         """Get history for trial."""
