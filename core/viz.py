@@ -11,24 +11,39 @@ import numpy.typing as npt
 import pandas as pd
 import colorcet as cc
 
+# USe Times New Roman for IEEE
+# Reference: https://stackoverflow.com/a/40734893
+plt.rcParams["font.family"] = "Times New Roman"
+
 
 def visualize_history(
     history: History,
     metrics: list[str],
-    figsize: tuple[int, int] = (12, 8)
+    figsize: tuple[int, int] = (5, 3)
 ):
     """Visualize model history."""
-    num_cols = len(metrics)
+    num_rows = len(metrics)
+    colors = [
+        (0, 0.12, 0.35),
+        (1, 0.01, 0.31),
+    ]
 
     plt.figure(figsize=figsize)
 
     for i, metric in enumerate(metrics):
-        plt.subplot(2, num_cols, i+1)
-        plt.plot(history.history[metric], label=f"train {metric}")
-        plt.plot(history.history[f"val_{metric}"], label=f"val {metric}")
+        plt.subplot(num_rows, 1, i+1)
+        plt.plot(
+            history.history[metric],
+            label=f"train {metric}",
+            color=colors[0]
+        )
+        plt.plot(
+            history.history[f"val_{metric}"],
+            label=f"val {metric}",
+            color=colors[1]
+        )
         plt.legend()
-
-    plt.title("Training History")
+        plt.xlabel("Epoch")
 
     plt.show()
     plt.close()
@@ -37,9 +52,12 @@ def visualize_history(
 def visualize_confusion_matrix(
     y_true: npt.ArrayLike,
     y_pred: npt.ArrayLike,
-    pretty_labels: npt.ArrayLike
+    pretty_labels: npt.ArrayLike,
+    figsize: tuple[int, int] = (5, 5)
 ):
     """Visualize confusion matrix."""
+    plt.figure(figsize=figsize)
+
     conf_matrix = metrics.confusion_matrix(y_true, y_pred)
     sns.heatmap(
         pd.DataFrame(
@@ -49,10 +67,11 @@ def visualize_confusion_matrix(
         ),
         annot=True,
         cmap="Blues",
-        fmt='d'
+        fmt='d',
+        cbar=False
     )
+
     plt.tight_layout()
-    plt.title("Confusion Matrix", y=1.1)
     plt.ylabel("Predicted")
     plt.xlabel("Ground Truth")
     plt.show()
@@ -63,7 +82,7 @@ def visualize_embeddings(
     embeddings_2d: npt.NDArray[np.float32],
     embedding_labels: npt.ArrayLike,
     label_map: dict[str, int],
-    figsize: tuple[int, int] = (12, 8)
+    figsize: tuple[int, int] = (5, 3)
 ):
     """Visualize 2-dimensional embeddings in scatter plot."""
     # Create a custom color map for each label (= letter)
@@ -83,7 +102,7 @@ def visualize_embeddings(
         embeddings_2d[:, 0],
         embeddings_2d[:, 1],
         lw=0,
-        s=20,
+        s=8,
         c=embedding_labels,
         cmap=custom_cmap,
         norm=norm
@@ -98,7 +117,7 @@ def visualize_embeddings(
             color='w',
             label=str_lbl.upper(),
             markerfacecolor=custom_cmap(int_lbl),
-            markersize=15
+            markersize=12
         )
         for str_lbl, int_lbl
         in label_map.items()
