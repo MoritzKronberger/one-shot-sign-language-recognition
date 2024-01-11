@@ -16,6 +16,7 @@ from keras.optimizers import Adam
 from keras_tuner import HyperParameters, Tuner
 from keras_tuner.src.engine.trial import Trial
 from sklearn.metrics import accuracy_score
+import pandas as pd
 import numpy as np
 import numpy.typing as npt
 from core.model import new_SNN_classifier, new_SNN_encoder, new_Siamese_Network
@@ -69,96 +70,100 @@ def new_default_callbacks(
     return [lr_callback, early_stopping]
 
 
-def evaluate_classification(
-    model: Model,
+def evaluate_n_way_accuracy(
     x_test: npt.NDArray[np.float32],
     y_test: npt.NDArray[int],
-    iterations: int = 10,
-    random_seed: int = 42,
-    batch_size: int = 32,
-    verbose: int = 1
-) -> tuple[list[int], list[int], list[float], float]:
-    """Evaluate contrastive model on classification task."""
-    # Sort dataset by numeric labels
-    label_sort_idx = np.argsort(y_test)
-    y_test = y_test[label_sort_idx]
-    x_test = x_test[label_sort_idx]
+    encoder: Model,
+    k_prototype: int,
+    iterations: int,
+    random_state: int = 42,
+):
+    """Evaluate n-way classification accuracy.
 
-    # Get unique labels (= classes)
-    unique_labels = np.unique(y_test)
-    num_classes = len(unique_labels)
+    In this simplified case n is the same as the number of classes in `y_test`.
 
-    # Seed for reproducibility
-    np.random.seed(random_seed)
+    `k_prototype` denotes the number of embeddings that will be averaged for each support.
 
-    # Collect evaluation results for every iteration
-    it_y_true: list[int] = []
-    it_y_pred: list[int] = []
-    it_acc: list[float] = []
+    Reference:
+        https://towardsdatascience.com/how-to-train-your-siamese-neural-network-4c6da3259463
+    """
+    # Let model predict embeddings
+    pred_embs = encoder.predict(x_test)
 
-    # Perform evaluation for every iteration
+    # Match labels and embeddings in DataFrame
+    df = pd.DataFrame({"label": y_test, "embedding": [y for y in pred_embs]})
+
+    # Collect predictions and accuracies over iterations
+    y_true: list[int] = []
+    y_pred: list[int] = []
+    acc_scores: list[float] = []
+
     for i in range(iterations):
-        # Initialize array to store indices for reference samples/labels
-        reference_indices = np.zeros(num_classes, dtype=int)
-
-        # Iterate over classes and get a random index to use as reference
-        for i, class_label in enumerate(unique_labels):
-            indices_for_label = np.where(y_test == class_label)[0]
-            random_index = np.random.choice(indices_for_label)
-            reference_indices[i] = random_index
-
-        # Get test labels
-        test_labels = np.delete(y_test, reference_indices)
-
-        # Get test and reference samples
-        reference_samples = np.take(x_test, reference_indices, axis=0)
-        test_samples = np.delete(x_test, reference_indices, axis=0)
-
-        # Collect reference and test samples for test data
-        x_test_1: list[npt.NDArray[np.float32]] = []
-        x_test_2: list[npt.NDArray[np.float32]] = []
-
-        for test_sample in test_samples:
-            # Add reference samples for every test sample
-            x_test_1.extend(reference_samples)
-            # Repeat test sample for every reference sample
-            x_test_2.extend([test_sample for _ in range(num_classes)])
-
-        x_test_1_np = np.array(x_test_1)
-        x_test_2_np = np.array(x_test_2)
-
-        # Make predictions
-        predictions = model.predict(
-            [x_test_1_np, x_test_2_np],
-            batch_size=batch_size,
-            verbose=verbose
+        # Sample n samples per class for support prototypes
+        prototype_df = df.groupby("label").sample(
+            n=k_prototype,
+            random_state=random_state*i
         )
 
-        # Group predictions against references for every test sample
-        predictions = predictions.reshape((-1, num_classes))
-        assert predictions.shape[0] == len(test_samples)
+        # Average n embeddings for each class -> support embeddings
+        support_df = prototype_df.groupby(
+            "label"
+        )["embedding"].mean().reset_index()
 
-        # Get index of lowest distance score for every test sample
-        pred_label_idx = np.argmin(predictions, axis=1)
+        # Choose all other samples not used for support prototypes as queries
+        query_df = df.drop(prototype_df.index)
 
-        # Get predicted label for every image
-        y_pred = [unique_labels[lbl_idx] for lbl_idx in pred_label_idx]
+        # Extract support labels
+        support_labels = support_df["label"].tolist()
 
-        # Ground truth == test labels
-        y_true = list(test_labels)
+        def __dist(a: npt.NDArray[np.float32], b: npt.NDArray[np.float32]):
+            """Euclidean distance."""
+            return np.linalg.norm(a - b)
 
-        # Get model accuracy
-        acc = accuracy_score(y_true, y_pred)
+        # Collect predictions
+        it_y_true: list[int] = []
+        it_y_pred: list[int] = []
 
-        # Collect results for iteration
-        it_y_true.extend(y_true)
-        it_y_pred.extend(y_pred)
-        it_acc.append(acc)
+        for _, query_row in query_df.iterrows():
+            # Get query embedding and label
+            query_emb = np.array(query_row["embedding"])
+            query_label = query_row["label"]
 
-    # Calculate mean accuracy
-    mean_acc = float(np.mean(it_acc))
+            # Calculate distance of query to every support
+            dists: list[np.float32] = []
+            for _, support_row in support_df.iterrows():
+                support_emb = np.array(support_row["embedding"])
+                dist = __dist(query_emb, support_emb)
+                dists.append(dist)
 
-    return it_y_true, it_y_pred, it_acc, mean_acc
+            # Select suppurt with min distance as prediction
+            pred_idx = np.argmin(np.array(dists))
+            it_y_pred.append(support_labels[pred_idx])
+            it_y_true.append(query_label)
+
+        # Compute accuracy
+        acc = accuracy_score(it_y_true, it_y_pred)
+
+        # Collect iteration results
+        y_true.extend(it_y_true)
+        y_pred.extend(it_y_pred)
+        acc_scores.append(acc)
+
+    # Calculate accuracy metrics
+    np_acc_scores = np.array(acc_scores)
+    mean_acc = np.mean(np_acc_scores)
+    min_acc = np.min(np_acc_scores)
+    max_acc = np.max(np_acc_scores)
+    std_acc = np.std(np_acc_scores)
+
+    return (
+        y_true,
+        y_pred,
+        mean_acc,
+        min_acc,
+        max_acc,
+        std_acc
+    )
 
 
 def new_SNN_builder(
