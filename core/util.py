@@ -169,7 +169,7 @@ def evaluate_n_way_accuracy(
 def new_SNN_builder(
     mode: Literal["classifier", "siamese"],
     loss: Callable | str,
-    metrics: list[str] | None,
+    metrics: list[str] | None = None,
     num_classes: int | None = None,
     distance: Callable | None = None
 ):
