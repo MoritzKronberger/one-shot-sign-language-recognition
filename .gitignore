@@ -2,6 +2,7 @@
 *cache*
 *.json
 *.csv
+*.svg
 datset/*
 *.keras
 tuner*

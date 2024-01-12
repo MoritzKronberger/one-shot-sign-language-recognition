@@ -19,6 +19,8 @@ plt.rcParams["font.family"] = "Times New Roman"
 def visualize_history(
     history: History,
     metrics: list[str],
+    loss_name: str,
+    filepath: str,
     figsize: tuple[int, int] = (5, 3)
 ):
     """Visualize model history."""
@@ -31,20 +33,24 @@ def visualize_history(
     plt.figure(figsize=figsize)
 
     for i, metric in enumerate(metrics):
+        metric_name = (loss_name if metric == "loss"
+                       else metric)
         plt.subplot(num_rows, 1, i+1)
         plt.plot(
             history.history[metric],
-            label=f"train {metric}",
+            label=f"{metric_name} (training)",
             color=colors[0]
         )
         plt.plot(
             history.history[f"val_{metric}"],
-            label=f"val {metric}",
+            label=f"{metric_name} (validation)",
             color=colors[1]
         )
         plt.legend()
         plt.xlabel("Epoch")
 
+    plt.tight_layout()
+    plt.savefig(filepath)
     plt.show()
     plt.close()
 
@@ -53,6 +59,7 @@ def visualize_confusion_matrix(
     y_true: npt.ArrayLike,
     y_pred: npt.ArrayLike,
     pretty_labels: npt.ArrayLike,
+    filepath: str,
     figsize: tuple[int, int] = (5, 5)
 ):
     """Visualize confusion matrix."""
@@ -74,6 +81,8 @@ def visualize_confusion_matrix(
     plt.tight_layout()
     plt.ylabel("Predicted")
     plt.xlabel("Ground Truth")
+
+    plt.savefig(filepath)
     plt.show()
     plt.close()
 
@@ -82,6 +91,7 @@ def visualize_embeddings(
     embeddings_2d: npt.NDArray[np.float32],
     embedding_labels: npt.ArrayLike,
     label_map: dict[str, int],
+    filepath: str,
     figsize: tuple[int, int] = (5, 3)
 ):
     """Visualize 2-dimensional embeddings in scatter plot."""
@@ -133,5 +143,6 @@ def visualize_embeddings(
     ax.set_xticks([])
     ax.set_yticks([])
 
+    plt.savefig(filepath)
     plt.show()
     plt.close()
