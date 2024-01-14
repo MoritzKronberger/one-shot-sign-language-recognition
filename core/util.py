@@ -12,6 +12,7 @@ from keras.callbacks import (
     History
 )
 from keras.models import Model
+from keras.layers import Lambda
 from keras.optimizers import Adam
 from keras_tuner import HyperParameters, Tuner
 from keras_tuner.src.engine.trial import Trial
@@ -19,6 +20,7 @@ from sklearn.metrics import accuracy_score
 import pandas as pd
 import numpy as np
 import numpy.typing as npt
+import tensorflow as tf
 from core.model import new_SNN_classifier, new_SNN_encoder, new_Siamese_Network
 
 
@@ -76,7 +78,7 @@ def evaluate_n_way_accuracy(
     encoder: Model,
     k_prototype: int,
     iterations: int,
-    random_state: int = 42,
+    random_state: int = 42
 ):
     """Evaluate n-way classification accuracy.
 
@@ -167,11 +169,13 @@ def evaluate_n_way_accuracy(
 
 
 def new_SNN_builder(
-    mode: Literal["classifier", "siamese"],
+    mode: Literal["classifier", "siamese", "encoder_l2"],
     loss: Callable | str,
     metrics: list[str] | None = None,
     num_classes: int | None = None,
-    distance: Callable | None = None
+    distance: Callable | None = None,
+    siamese_sigmoid_output: bool = True,
+    force_embedding_bn: bool = False,
 ):
     """Create SNN builder for Keras Tuner.
 
@@ -196,13 +200,25 @@ def new_SNN_builder(
                 num_classes=num_classes,
                 dropout=hp.Boolean("decoder_dropout")
             )
-        else:
+        elif mode == "siamese":
             # Siamese NN
             model = new_Siamese_Network(
                 snn_encoder,
                 distance=distance,
-                batch_normalization=hp.Boolean("siamese_bn"),
-                sigmoid_output=hp.Boolean("siamese_dropout")
+                batch_normalization=(
+                    force_embedding_bn
+                    or hp.Boolean("siamese_bn")
+                ),
+                sigmoid_output=siamese_sigmoid_output
+            )
+        else:
+            outputs = Lambda(lambda x: tf.math.l2_normalize(x, axis=1))(
+                snn_encoder.output
+            )
+            model = Model(
+                inputs=snn_encoder.input,
+                outputs=outputs,
+                name="encoder_l2"
             )
 
         # Use Adam optimizer
