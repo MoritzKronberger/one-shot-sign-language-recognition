@@ -11,7 +11,7 @@ import numpy.typing as npt
 import pandas as pd
 import colorcet as cc
 
-# USe Times New Roman for IEEE
+# Use Times New Roman for IEEE
 # Reference: https://stackoverflow.com/a/40734893
 plt.rcParams["font.family"] = "Times New Roman"
 
