@@ -78,7 +78,8 @@ def evaluate_n_way_accuracy(
     encoder: Model,
     k_prototype: int,
     iterations: int,
-    random_state: int = 42
+    random_state: int = 42,
+    verbose: bool = False
 ):
     """Evaluate n-way classification accuracy.
 
@@ -90,7 +91,7 @@ def evaluate_n_way_accuracy(
         https://towardsdatascience.com/how-to-train-your-siamese-neural-network-4c6da3259463
     """
     # Let model predict embeddings
-    pred_embs = encoder.predict(x_test)
+    pred_embs = encoder.predict(x_test, verbose=verbose)
 
     # Match labels and embeddings in DataFrame
     df = pd.DataFrame({"label": y_test, "embedding": [y for y in pred_embs]})
@@ -166,6 +167,58 @@ def evaluate_n_way_accuracy(
         max_acc,
         std_acc
     )
+
+
+def save_n_way_k_prototype_accuracy(
+    x_test: npt.NDArray[np.float32],
+    y_test: npt.NDArray[int],
+    encoder: Model,
+    filepath: str,
+    loss_name: str,
+    iterations=10,
+    random_state=42,
+    k_prototype: list[int] = [1, 3, 5, 10, 15, 20, 50, 75, 100]
+):
+    """Evaluate n-way accuracy for differently sized prototypes.
+
+    Save results to metrics file.
+    """
+    # Collect accuracy scores for different ks
+    n_way_acc_scores = []
+
+    # Evaluate n-way accuracy for different ks
+    for k in k_prototype:
+        _, _, n_way_acc, _, _, std = evaluate_n_way_accuracy(
+            x_test,
+            y_test,
+            encoder,
+            k_prototype=k,
+            iterations=iterations,
+            random_state=random_state
+        )
+
+        n_way_acc_scores.append(n_way_acc)
+
+        print(
+            f"Mean 5-way accuracy (k-prototype = {k}): {n_way_acc}, std: {std}"
+        )
+
+    # Try reading existing metric file
+    try:
+        with open(filepath, "r") as f:
+            metrics = json.load(f)
+    except Exception:
+        print("Warning: Reading empty metrics")
+        metrics = {}
+
+    # Save results to metrics file
+    with open(filepath, "w") as f:
+        metrics[loss_name] = {
+            "k": k_prototype,
+            "acc": n_way_acc_scores,
+        }
+        json.dump(metrics, f)
+        print(f"Saved {loss_name} metrics to {filepath}")
 
 
 def new_SNN_builder(
