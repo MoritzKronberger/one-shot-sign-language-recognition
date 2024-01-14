@@ -4,6 +4,7 @@ from keras.callbacks import History
 from sklearn import metrics
 from matplotlib.colors import ListedColormap
 from matplotlib.lines import Line2D
+from matplotlib.ticker import FormatStrFormatter, NullLocator
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,7 +22,8 @@ def visualize_history(
     metrics: list[str],
     loss_name: str,
     filepath: str,
-    figsize: tuple[int, int] = (5, 3)
+    figsize: tuple[int, int] = (5, 3),
+    log_yscale: bool = False,
 ):
     """Visualize model history."""
     num_rows = len(metrics)
@@ -48,6 +50,14 @@ def visualize_history(
         )
         plt.legend()
         plt.xlabel("Epoch")
+        if log_yscale:
+            # Set log scale
+            ax = plt.gca()
+            ax.set_yscale('log')
+            # Remove scientific label formatting for consistency
+            # https://stackoverflow.com/a/29188910
+            ax.yaxis.set_minor_locator(NullLocator())
+            ax.yaxis.set_major_formatter(FormatStrFormatter("%.2g"))
 
     plt.tight_layout()
     plt.savefig(filepath)
