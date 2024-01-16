@@ -16,9 +16,6 @@ def new_contrastive_loss(margin=1):
     Reference:
         https://keras.io/examples/vision/siamese_network
     """
-
-    # Contrastive loss = mean( (1-true_value) * square(prediction) +
-    #                         true_value * square( max(margin-prediction, 0) ))
     def contrastive_loss(y_true, y_pred):
         """Calculates the contrastive loss.
 
@@ -30,7 +27,6 @@ def new_contrastive_loss(margin=1):
         Returns:
             A tensor containing contrastive loss as floating point value.
         """
-
         square_pred = tf.math.square(y_pred)
         margin_square = tf.math.square(tf.math.maximum(margin - (y_pred), 0))
         return tf.math.reduce_mean(

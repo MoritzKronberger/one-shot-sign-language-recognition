@@ -1,9 +1,6 @@
 """Distance metrics for embedding vectors."""
 
 import tensorflow as tf
-from tensorflow_addons.losses import metric_learning
-from keras.metrics import CosineSimilarity
-import keras.backend as K
 
 
 def euclidean_distance(vects: list[tf.Tensor]) -> tf.Tensor:
@@ -18,7 +15,6 @@ def euclidean_distance(vects: list[tf.Tensor]) -> tf.Tensor:
     Reference:
         https://keras.io/examples/vision/siamese_network
     """
-
     x, y = vects
     sum_square = tf.math.reduce_sum(
         tf.math.square(x - y),
