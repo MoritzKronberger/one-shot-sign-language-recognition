@@ -16,6 +16,8 @@ debugpy==1.8.0
 decorator==5.1.1
 exceptiongroup==1.2.0
 executing==2.0.1
+flake8==7.0.0
+flake8-docstrings==1.7.0
 flatbuffers==23.5.26
 fonttools==4.45.0
 gast==0.5.4
@@ -42,8 +44,11 @@ Markdown==3.5.1
 MarkupSafe==2.1.3
 matplotlib==3.8.2
 matplotlib-inline==0.1.6
+mccabe==0.7.0
 mediapipe==0.10.8
 ml-dtypes==0.2.0
+mypy==1.8.0
+mypy-extensions==1.0.0
 nest-asyncio==1.5.8
 numpy==1.26.2
 oauthlib==3.2.2
@@ -52,6 +57,7 @@ opencv-python==4.8.1.78
 opt-einsum==3.3.0
 packaging==23.2
 pandas==2.1.3
+pandas-stubs==2.1.4.231227
 param==2.0.1
 parso==0.8.3
 pexpect==4.8.0
@@ -64,8 +70,11 @@ ptyprocess==0.7.0
 pure-eval==0.2.2
 pyasn1==0.5.1
 pyasn1-modules==0.3.0
+pycodestyle==2.11.1
 pycparser==2.21
 pyct==0.5.0
+pydocstyle==6.3.0
+pyflakes==3.2.0
 Pygments==2.17.1
 pyparsing==3.1.1
 python-dateutil==2.8.2
@@ -79,6 +88,7 @@ scikit-learn==1.3.2
 scipy==1.11.4
 seaborn==0.13.0
 six==1.16.0
+snowballstemmer==2.2.0
 sounddevice==0.4.6
 stack-data==0.6.3
 tensorboard==2.15.1
@@ -91,11 +101,13 @@ tensorflow-macos==2.15.0
 termcolor==2.3.0
 text-unidecode==1.3
 threadpoolctl==3.2.0
+tomli==2.0.1
 tornado==6.3.3
 tqdm==4.66.1
 traitlets==5.13.0
 typeguard==2.13.3
 types-protobuf==4.24.0.20240106
+types-pytz==2023.3.1.1
 types-tensorflow==2.12.0.20240106
 typing_extensions==4.8.0
 tzdata==2023.3

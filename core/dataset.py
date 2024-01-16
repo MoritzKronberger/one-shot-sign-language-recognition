@@ -22,9 +22,9 @@ NumericLabelMap = dict[str, int]
 class CategoricalNumericDataset:
     """Categorical dataset with numeric integer labels."""
     x_train: npt.NDArray[np.float32]
-    y_train: npt.NDArray[int]
+    y_train: npt.NDArray[np.int_]
     x_test: npt.NDArray[np.float32]
-    y_test: npt.NDArray[int]
+    y_test: npt.NDArray[np.int_]
     label_map: NumericLabelMap
 
 
@@ -32,9 +32,9 @@ class CategoricalNumericDataset:
 class CategoricalOneHotDataset:
     """Categorical dataset with one hot labels."""
     x_train: npt.NDArray[np.float32]
-    y_train: npt.NDArray[int]
+    y_train: npt.NDArray[np.int_]
     x_test: npt.NDArray[np.float32]
-    y_test: npt.NDArray[int]
+    y_test: npt.NDArray[np.int_]
     label_map: NumericLabelMap
 
 
@@ -65,8 +65,8 @@ class DGSAlphabet:
         self,
         kaggle_dataset_id: str = "moritzkronberger/german-sign-language",
         local_dataset_dir: str = "./dataset",
-        dataset_filename="german_sign_language",
-        dataset_filetype="csv"
+        dataset_filename: str = "german_sign_language",
+        dataset_filetype: str = "csv"
     ):
         """Create new dataset wrapper."""
         self.kaggle_dataset_id = kaggle_dataset_id
@@ -90,7 +90,7 @@ class DGSAlphabet:
     def __str_labels_to_int(
         self,
         labels: npt.NDArray[np.str_]
-    ) -> tuple[npt.NDArray[int], NumericLabelMap]:
+    ) -> tuple[npt.NDArray[np.int_], NumericLabelMap]:
         """Convert string labels to integers using map."""
         unique_labels = np.unique(labels)
         label_map = {lbl: i for i, lbl in enumerate(unique_labels)}
@@ -99,7 +99,7 @@ class DGSAlphabet:
     def __make_pairs(
         self,
         x: npt.NDArray[np.float32],
-        y: npt.NDArray[int],
+        y: npt.NDArray[np.int_],
         margin: float = 1
     ) -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32]]:
         """Pair every sample with a random matching and non-matching sample.
@@ -172,8 +172,8 @@ class DGSAlphabet:
             y, label_map = self.__str_labels_to_int(y)
 
             # Reshape data to 3D landmarks
-            x = df.drop(['label'], axis=1)
-            x = x.to_numpy()
+            x_df = df.drop(['label'], axis=1)
+            x = x_df.to_numpy()
             x = x.reshape((x.shape[0], -1, landmark_dims))
 
             # Split into train and test data
@@ -190,7 +190,7 @@ class DGSAlphabet:
             test_mask = df.label.isin(exclusive_test_labels)
 
             # Convert to numeric labels
-            y = df.label.array
+            y = df.label.array  # type: ignore
             y, label_map = self.__str_labels_to_int(y)
             df["label"] = y
 
@@ -230,7 +230,7 @@ class DGSAlphabet:
         landmark_dims: int = 3,
         exclusive_test_labels: list[str] | None = None,
         shuffle_exclusive_test_data: bool = False
-    ):
+    ) -> CategoricalOneHotDataset:
         """Load dataset in categorical format.
 
         (One hot labels)
@@ -262,7 +262,7 @@ class DGSAlphabet:
         margin: float = 1,
         exclusive_test_labels: list[str] | None = None,
         shuffle_exclusive_test_data: bool = False
-    ):
+    ) -> PairDataset:
         """Load dataset in pair format.
 
         (Distance labels)

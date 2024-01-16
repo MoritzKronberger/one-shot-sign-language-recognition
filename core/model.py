@@ -64,7 +64,7 @@ def new_SNN_classifier(
     encoder: Model,
     dropout: bool = True,
     num_classes: int = 24
-):
+) -> Model:
     """Append classification decoder to SNN encoder.
 
     Default config matches original model from Kaggle notebook:
@@ -93,7 +93,7 @@ def new_SNN_classifier(
 
 def new_Siamese_Network(
     encoder: Model,
-    distance: Callable | None,
+    distance: Callable[[list[tf.Tensor]], tf.Tensor] | None,
     batch_normalization: bool = True,
     sigmoid_output: bool = True
 ) -> Model:

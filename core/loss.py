@@ -1,9 +1,10 @@
 """Custom loss functions."""
 
+from typing import Callable
 import tensorflow as tf
 
 
-def new_contrastive_loss(margin=1):
+def new_contrastive_loss(margin: float = 1) -> Callable[[tf.Tensor, tf.Tensor], tf.Tensor]:
     """Provides 'contrastive_loss' an enclosing scope with variable 'margin'.
 
     Arguments:
@@ -16,7 +17,7 @@ def new_contrastive_loss(margin=1):
     Reference:
         https://keras.io/examples/vision/siamese_network
     """
-    def contrastive_loss(y_true, y_pred):
+    def contrastive_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
         """Calculates the contrastive loss.
 
         Arguments:

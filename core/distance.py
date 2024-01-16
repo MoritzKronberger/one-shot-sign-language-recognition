@@ -21,9 +21,11 @@ def euclidean_distance(vects: list[tf.Tensor]) -> tf.Tensor:
         axis=1,
         keepdims=True
     )
-    return tf.math.sqrt(
+    distance: tf.Tensor = tf.math.sqrt(
         tf.math.maximum(sum_square, tf.keras.backend.epsilon())
     )
+
+    return distance
 
 
 def cosine_distance(vects: list[tf.Tensor]) -> tf.Tensor:

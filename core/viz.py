@@ -24,7 +24,7 @@ def visualize_history(
     filepath: str,
     figsize: tuple[int, int] = (5, 3),
     log_yscale: bool = False,
-):
+) -> None:
     """Visualize model history."""
     num_rows = len(metrics)
     colors = [
@@ -71,13 +71,13 @@ def visualize_confusion_matrix(
     pretty_labels: npt.ArrayLike,
     filepath: str,
     figsize: tuple[int, int] = (5, 5)
-):
+) -> None:
     """Visualize confusion matrix."""
     plt.figure(figsize=figsize)
 
     conf_matrix = metrics.confusion_matrix(y_true, y_pred)
     sns.heatmap(
-        pd.DataFrame(
+        pd.DataFrame(  # type: ignore
             conf_matrix,
             index=pretty_labels,
             columns=pretty_labels
@@ -103,7 +103,7 @@ def visualize_embeddings(
     label_map: dict[str, int],
     filepath: str,
     figsize: tuple[int, int] = (5, 3)
-):
+) -> None:
     """Visualize 2-dimensional embeddings in scatter plot."""
     # Create a custom color map for each label (= letter)
     # References:
@@ -113,7 +113,7 @@ def visualize_embeddings(
     num_classes = len(label_map)
     sns_palette = sns.color_palette(cc.glasbey, n_colors=num_classes)
     custom_cmap = ListedColormap(sns_palette.as_hex(), N=num_classes)
-    norm = plt.Normalize(0, num_classes-1)
+    norm = plt.Normalize(0, num_classes-1)  # type: ignore
 
     # Visualize embeddings in scatter plot
     fig = plt.figure(figsize=figsize)

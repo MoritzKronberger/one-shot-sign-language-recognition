@@ -74,13 +74,13 @@ def new_default_callbacks(
 
 def evaluate_n_way_accuracy(
     x_test: npt.NDArray[np.float32],
-    y_test: npt.NDArray[int],
+    y_test: npt.NDArray[np.int_],
     encoder: Model,
     k_prototype: int,
     iterations: int,
     random_state: int = 42,
     verbose: bool = False
-):
+) -> tuple[list[int], list[int], float, float, float, float]:
     """Evaluate n-way classification accuracy.
 
     In this simplified case n is the same as the number of classes in `y_test`.
@@ -119,9 +119,10 @@ def evaluate_n_way_accuracy(
         # Extract support labels
         support_labels = support_df["label"].tolist()
 
-        def __dist(a: npt.NDArray[np.float32], b: npt.NDArray[np.float32]):
+        def __dist(a: npt.NDArray[np.float32], b: npt.NDArray[np.float32]) -> np.float32:
             """Euclidean distance."""
-            return np.linalg.norm(a - b)
+            distance: np.float32 = np.linalg.norm(a - b).astype(np.float32)
+            return distance
 
         # Collect predictions
         it_y_true: list[int] = []
@@ -171,14 +172,14 @@ def evaluate_n_way_accuracy(
 
 def save_n_way_k_prototype_accuracy(
     x_test: npt.NDArray[np.float32],
-    y_test: npt.NDArray[int],
+    y_test: npt.NDArray[np.int_],
     encoder: Model,
     filepath: str,
     loss_name: str,
-    iterations=10,
-    random_state=42,
+    iterations: int = 10,
+    random_state: int = 42,
     k_prototype: list[int] = [1, 3, 5, 10, 15, 20, 50, 75, 100]
-):
+) -> None:
     """Evaluate n-way accuracy for differently sized prototypes.
 
     Save results to metrics file.
@@ -223,20 +224,20 @@ def save_n_way_k_prototype_accuracy(
 
 def new_SNN_builder(
     mode: Literal["classifier", "siamese", "encoder_l2"],
-    loss: Callable | str,
+    loss: Callable[[tf.Tensor, tf.Tensor], tf.Tensor] | str,
     metrics: list[str] | None = None,
     num_classes: int | None = None,
-    distance: Callable | None = None,
+    distance: Callable[[list[tf.Tensor]], tf.Tensor] | None = None,
     siamese_sigmoid_output: bool = True,
     force_embedding_bn: bool = False,
-):
+) -> Callable[[HyperParameters, bool], Model]:
     """Create SNN builder for Keras Tuner.
 
     Reference:
         https://keras.io/guides/keras_tuner/getting_started/#tune-the-model-architecture
     """
 
-    def __build_model(hp: HyperParameters, get_encoder: bool = False):
+    def __build_model(hp: HyperParameters, get_encoder: bool = False) -> Model:
         # Encoder part
         snn_encoder = new_SNN_encoder(
             dense_count=hp.Int("dense_count", min_value=2,
@@ -399,7 +400,7 @@ class TunerHistory:
             self.__history[(trial_id, trial_config)] = trial_history
 
 
-class TunerHistoryCallback(Callback):
+class TunerHistoryCallback(Callback):  # type: ignore
     """Hack to collect training history for Keras Tuner trials.
 
     Usage:
@@ -477,7 +478,7 @@ class TunerHistoryCallback(Callback):
         hp_hash = self.__hp_hash(hp_values)
         return (trial_id, hp_hash)
 
-    def on_epoch_end(self, epoch, logs=None):
+    def on_epoch_end(self, epoch: int, logs: str | None = None) -> None:
         """On epoch end callback."""
         # Ensure current trial is set
         if self.__trial is None:
@@ -492,7 +493,7 @@ class TunerHistoryCallback(Callback):
         # Forward epoch end callback to trial history
         trial_history.on_epoch_end(epoch, logs)
 
-    def __on_trial_begin(self, trial: Trial):
+    def __on_trial_begin(self, trial: Trial) -> None:
         """Sync. current trial.
 
         Overwrite tuner `on_trial_begin`:
@@ -504,7 +505,7 @@ class TunerHistoryCallback(Callback):
         self.__trial = trial
         self.__trial_id = self.__full_trial_id(trial)
 
-    def __on_trial_end(self, trial: Trial):
+    def __on_trial_end(self, trial: Trial) -> None:
         """Persist history as JSON."""
         # Get path to tuner's project directory
         tuner_dir = self.__tuner.directory
