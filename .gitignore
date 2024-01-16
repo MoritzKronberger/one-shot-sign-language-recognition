@@ -6,6 +6,7 @@
 datset/*
 *.keras
 tuner*
+.DS_Store
 
 !settings.json
 !extensions.json
