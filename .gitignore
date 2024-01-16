@@ -6,3 +6,6 @@
 datset/*
 *.keras
 tuner*
+
+!settings.json
+!extensions.json
