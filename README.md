@@ -35,3 +35,18 @@ Linting for the core functionality can be performed with:
 ```bash
 flake8 core
 ```
+
+## Project Structure
+
+The project is divided into various notebooks for all of the different experiments.
+
+The notebooks are meant to be viewed in the following order:
+
+1. [introduction.ipynb](./introduction.ipynb): background information on the project and basic data exploration
+2. [embeddings.ipynb](./embeddings.ipynb): conventional sign language classification and embeddings visualization
+3. [contrastive_loss.ipynb](./contrastive_loss.ipynb): One-Shot Learning experiments using Contrastive Loss
+4. [triplet_loss.ipynb](./triplet_loss.ipynb): One-Shot Learning experiments using Triplet Loss
+5. [n_pair_loss.ipynb](./n_pair_loss.ipynb): One-Shot Learning experiments using Multi-Class N-Pair Loss
+6. [prototype_comparison.ipynb](./prototype_comparison.ipynb): comparison of benefits from support prototypes across all One-Shot Learning techniques
+
+Core functionality used in multiple notebooks is separated in the [core module](./core) and imported.
