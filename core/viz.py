@@ -102,7 +102,7 @@ def visualize_embeddings(
     embedding_labels: npt.ArrayLike,
     label_map: dict[str, int],
     filepath: str,
-    figsize: tuple[int, int] = (5, 3)
+    figsize: tuple[int, int] = (7, 4)
 ) -> None:
     """Visualize 2-dimensional embeddings in scatter plot."""
     # Create a custom color map for each label (= letter)
