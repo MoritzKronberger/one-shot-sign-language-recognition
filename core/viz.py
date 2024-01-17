@@ -21,7 +21,7 @@ def visualize_history(
     history: History,
     metrics: list[str],
     loss_name: str,
-    filepath: str,
+    filepath: str | None,
     figsize: tuple[int, int] = (5, 3),
     log_yscale: bool = False,
 ) -> None:
@@ -60,7 +60,8 @@ def visualize_history(
             ax.yaxis.set_major_formatter(FormatStrFormatter("%.2g"))
 
     plt.tight_layout()
-    plt.savefig(filepath)
+    if filepath is not None:
+        plt.savefig(filepath)
     plt.show()
     plt.close()
 
@@ -69,7 +70,7 @@ def visualize_confusion_matrix(
     y_true: npt.ArrayLike,
     y_pred: npt.ArrayLike,
     pretty_labels: npt.ArrayLike,
-    filepath: str,
+    filepath: str | None,
     figsize: tuple[int, int] = (5, 5)
 ) -> None:
     """Visualize confusion matrix."""
@@ -92,7 +93,8 @@ def visualize_confusion_matrix(
     plt.ylabel("Predicted")
     plt.xlabel("Ground Truth")
 
-    plt.savefig(filepath)
+    if filepath is not None:
+        plt.savefig(filepath)
     plt.show()
     plt.close()
 
@@ -101,7 +103,7 @@ def visualize_embeddings(
     embeddings_2d: npt.NDArray[np.float32],
     embedding_labels: npt.ArrayLike,
     label_map: dict[str, int],
-    filepath: str,
+    filepath: str | None,
     figsize: tuple[int, int] = (7, 4)
 ) -> None:
     """Visualize 2-dimensional embeddings in scatter plot."""
@@ -153,6 +155,7 @@ def visualize_embeddings(
     ax.set_xticks([])
     ax.set_yticks([])
 
-    plt.savefig(filepath)
+    if filepath is not None:
+        plt.savefig(filepath)
     plt.show()
     plt.close()
