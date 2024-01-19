@@ -20,6 +20,13 @@ Dependencies can be installed using pip:
 pip install -r requirements.txt
 ```
 
+### Kaggle Authentication
+
+To download the dataset from Kaggle using the [`kaggle` library](https://github.com/Kaggle/kaggle-api),
+[download the `kaggle.json` credentials for your account](https://github.com/Kaggle/kaggle-api#api-credentials) and place them in the appropriate directory.
+
+Alternatively, you can place them in this project's root and use the command provided in the [introduction notebook](./introduction.ipynb) to copy the file accordingly.
+
 ### Development
 
 For a better development experience in VisualStudio Code, install the recommended extension listed in [extensions.json](./.vscode/extensions.json).
